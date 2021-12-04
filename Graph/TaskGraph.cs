@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using CppBuild.Build;
 
 namespace CppBuild.Graph
 {
@@ -18,6 +19,7 @@ namespace CppBuild.Graph
 
         private readonly List<BuildResultCache> _prevBuildCache = new List<BuildResultCache>();
         private readonly List<string> _prevBuildCacheFiles = new List<string>();
+        private readonly TaskExecutor _executor;
 
         /// <summary>
         /// The workspace folder of the task graph.
@@ -45,10 +47,12 @@ namespace CppBuild.Graph
         /// </summary>
         /// <param name="workspace">The workspace root folder. Used to locate the build system cache location for the graph.</param>
         /// <param name="intermediateFolder">The cache folder path relative to the workspace path</param>
-        public TaskGraph(string workspace, string intermediateFolder)
+        /// <param name="executor">The executor for the task graph.</param>
+        public TaskGraph(string workspace, string intermediateFolder, TaskExecutor executor)
         {
             Workspace = workspace;
             CachePath = Path.Combine(workspace, intermediateFolder, "TaskGraph.cache");
+            _executor = executor;
         }
 
         /// <summary>
@@ -77,15 +81,15 @@ namespace CppBuild.Graph
             task.Cost = 1;
             task.WorkingDirectory = Workspace;
             var outputPath = Path.GetDirectoryName(dstFile);
-            if (Platform.BuildPlatform.Target == TargetPlatform.Windows)
+            if (Platform.BuildTargetPlatform == TargetPlatform.Windows)
             {
                 task.CommandPath = "xcopy";
-                task.CommandArguments = string.Format("/y \"{0}\" \"{1}\"", srcFile, outputPath);
+                task.CommandArguments = $"/y \"{srcFile}\" \"{outputPath}\"";
             }
             else
             {
                 task.CommandPath = "cp";
-                task.CommandArguments = string.Format("\'{0}\' \'{1}\'", srcFile, outputPath);
+                task.CommandArguments = $"\'{srcFile}\' \'{outputPath}\'";
             }
 
             Tasks.Add(task);
@@ -174,8 +178,7 @@ namespace CppBuild.Graph
             Log.Verbose("");
             Log.Verbose(string.Format("Total {0} tasks", Tasks.Count));
 
-            var executor = new LocalExecutor();
-            executedTasksCount = executor.Execute(Tasks);
+            executedTasksCount = _executor.Execute(Tasks);
 
             var failedCount = 0;
             foreach (var task in Tasks)
