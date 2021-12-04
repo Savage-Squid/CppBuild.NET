@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using CommandLine;
 
 namespace CppBuild.CommandLine
@@ -6,11 +7,11 @@ namespace CppBuild.CommandLine
     public class BuildOptions
     {
         [Option('w', "workspace", HelpText = "The custom working directory.")]
-        public string? CurrentDirectory { get; set; }
+        public string CurrentDirectory { get; set; }
 
         [Option("logfile", Default = "Log.txt",
             HelpText = "The log file path relative to the working directory. Set to empty to disable it.")]
-        public string LogFile { get; set; } = "Log.txt";
+        public string LogFile { get; set; }
         
         [Option("stdout", HelpText = "Enables logging into console.")]
         public bool ConsoleLog { get; set; }
@@ -47,5 +48,8 @@ namespace CppBuild.CommandLine
         /// </summary>
         [Option("intermediate", Default = "Cache/Intermediate", HelpText = "The intermediate build files folder path relative to the working directory.")]
         public string IntermediateFolder { get; set; } = "Cache/Intermediate";
+
+        [Option("custom-defines", HelpText = "Custom CPP defines.")]
+        public IEnumerable<string> CustomDefines { get; set; }
     }
 }

@@ -26,7 +26,7 @@ namespace CppBuild
         /// </summary>
         public static bool ApplyConsoleColors = true;
 
-        internal static void Init(string? logfilePath, bool consoleLog, bool verbose)
+        internal static void Init(string logfilePath, bool consoleLog, bool verbose)
         {
             _consoleLog = consoleLog;
             _verbose = verbose;
@@ -81,6 +81,7 @@ namespace CppBuild
             lock (_logFile)
             {
                 _logFileWriter?.WriteLine(prefix + Indent + message);
+                _logFileWriter?.Flush();
             }
         }
 
@@ -188,6 +189,32 @@ namespace CppBuild
                 Warning("Inner exception:");
                 Exception(ex.InnerException);
             }
+        }
+    }
+    
+    /// <summary>
+    /// Applies a log indent for the lifetime of an object.
+    /// </summary>
+    public class LogIndentScope : IDisposable
+    {
+        private string _prevIndent;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LogIndentScope"/> class.
+        /// </summary>
+        /// <param name="indent">The indent to apply to the existing indentation.</param>
+        public LogIndentScope(string indent = "  ")
+        {
+            _prevIndent = Log.Indent;
+            Log.Indent += indent;
+        }
+
+        /// <summary>
+        /// Restores the log indent to previous state.
+        /// </summary>
+        public void Dispose()
+        {
+            Log.Indent = _prevIndent;
         }
     }
 }
